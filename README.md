@@ -4,11 +4,7 @@ This is a rust port of the anomaly detection algorithm described in [Extended Is
 and implemented in [https://github.com/sahandha/eif](https://github.com/sahandha/eif). For a detailed description see the paper or the
 github repository.
 
-This crate currently requires rust **nightly** as it makes use of the `min_const_generics` feature
-(see https://github.com/rust-lang/rust/issues/74878 and https://github.com/rust-lang/rust/pull/79135)
-which propably will reach stable rust in version 1.51.
-
-This crate certainly will get published to crates.io once `min_const_genercis` becomes stable.
+This crate  requires rust >= 1.51 as it makes use of the `min_const_generics` feature.
 
 ## Example
 
