@@ -64,12 +64,24 @@ use rand::{
     },
 };
 use rand_distr::{Distribution, StandardNormal};
+#[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
 pub use crate::error::Error;
 
 mod error;
+#[cfg(feature = "serde")]
 mod serde_array;
+
+
+#[cfg(not(feature = "serde"))]
+pub trait ForestFloat<'de>: Float {}
+
+#[cfg(feature = "serde")]
+pub trait ForestFloat<'de>: Float + Serialize + Deserialize<'de> {}
+
+impl<'de> ForestFloat<'de> for f32 {}
+impl<'de> ForestFloat<'de> for f64 {}
 
 pub struct ForestOptions {
     /// `n_trees` is the number of trees to be created.
@@ -99,8 +111,7 @@ impl Default for ForestOptions {
     }
 }
 
-
-#[derive(Serialize, Deserialize)]
+#[cfg_attr(feature="serde", derive(Serialize, Deserialize))]
 pub struct Forest<T, const N: usize>
 {
     /// Multiplicative factor used in computing the anomaly scores.
@@ -111,7 +122,7 @@ pub struct Forest<T, const N: usize>
 
 impl<'de, T, const N: usize> Forest<T, N>
     where
-        T: Float + SampleUniform + Default + Serialize + Deserialize<'de>,
+        T: ForestFloat<'de> + SampleUniform + Default,
         StandardNormal: Distribution<T>
 {
     /// Build a new forest from the given training data
@@ -161,14 +172,14 @@ impl<'de, T, const N: usize> Forest<T, N>
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[cfg_attr(feature="serde", derive(Serialize, Deserialize))]
 enum Node<T, const N: usize>
 {
     Ex(ExNode),
     In(InNode<T, N>),
 }
 
-#[derive(Serialize, Deserialize)]
+#[cfg_attr(feature="serde", derive(Serialize, Deserialize))]
 struct InNode<T, const N: usize>
 {
     /// Left child node.
@@ -179,21 +190,21 @@ struct InNode<T, const N: usize>
 
     /// Normal vector at the root of this tree, which is used in
     /// creating hyperplanes for splitting criteria
-    #[serde(with = "serde_array")]
+    #[cfg_attr(feature="serde", serde(with = "serde_array"))]
     n: [T; N],
 
     /// Intercept point through which the hyperplane passes.
-    #[serde(with = "serde_array")]
+    #[cfg_attr(feature="serde", serde(with = "serde_array"))]
     p: [T; N],
 }
 
-#[derive(Serialize, Deserialize)]
+#[cfg_attr(feature="serde", derive(Serialize, Deserialize))]
 struct ExNode {
     /// Size of the dataset present at the node.
     num_samples: usize,
 }
 
-#[derive(Serialize, Deserialize)]
+#[cfg_attr(feature="serde", derive(Serialize, Deserialize))]
 struct Tree<T, const N: usize>
 {
     root: Node<T, N>,
@@ -201,7 +212,7 @@ struct Tree<T, const N: usize>
 
 impl<'de, T, const N: usize> Tree<T, N>
     where
-        T: Float + SampleUniform + Default + Serialize + Deserialize<'de>,
+        T: ForestFloat<'de> + SampleUniform + Default,
         StandardNormal: Distribution<T>
 {
     pub fn new(samples: &[&[T; N]], rng: &mut ThreadRng, max_tree_depth: usize, extension_level: usize) -> Self {
@@ -344,7 +355,7 @@ mod tests {
         let distribution = Uniform::new(-4., 4.);
         let distribution2 = Uniform::new(10., 50.);
 
-        let values: Vec<_> = (0..3000)
+        let values: Vec<_> = (0..6000)
             .map(|_| [rng.sample(distribution), rng.sample(distribution), rng.sample(distribution2)])
             .collect();
 
@@ -374,6 +385,7 @@ mod tests {
         assert_anomalies_forest_3d_f64(&forest);
     }
 
+    #[cfg(feature = "serde")]
     #[test]
     fn serialize_forest_3d_f64() {
         let forest = make_f64_forest();
