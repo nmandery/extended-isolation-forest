@@ -4,7 +4,9 @@
 //! and implemented in [https://github.com/sahandha/eif](https://github.com/sahandha/eif). For a detailed description see the paper or the
 //! github repository.
 //!
-//! This crate  requires rust >= 1.51 as it makes use of the `min_const_generics` feature.
+//! This crate requires rust >= 1.51 as it makes use of `min_const_generics`.
+//!
+//! Includes optional serde support with the `serde` feature.
 //!
 //! ## Example
 //!
