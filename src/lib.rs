@@ -64,13 +64,12 @@ use rand::{
     },
 };
 use rand_distr::{Distribution, StandardNormal};
+use serde::{Deserialize, Serialize};
 
 pub use crate::error::Error;
 
-//#[cfg(feature = "use-serde")]
-//use serde::{Deserialize, Serialize};
-
 mod error;
+mod serde_array;
 
 pub struct ForestOptions {
     /// `n_trees` is the number of trees to be created.
@@ -100,10 +99,9 @@ impl Default for ForestOptions {
     }
 }
 
-//#[cfg_attr(feature="use-serde", derive(Serialize, Deserialize))]
-pub struct Forest<T: Float + SampleUniform + Default, const N: usize>
-    where
-        StandardNormal: Distribution<T>
+
+#[derive(Serialize, Deserialize)]
+pub struct Forest<T, const N: usize>
 {
     /// Multiplicative factor used in computing the anomaly scores.
     avg_path_length_c: f64,
@@ -111,9 +109,9 @@ pub struct Forest<T: Float + SampleUniform + Default, const N: usize>
     trees: Vec<Tree<T, N>>,
 }
 
-impl<T, const N: usize> Forest<T, N>
+impl<'de, T, const N: usize> Forest<T, N>
     where
-        T: Float + SampleUniform + Default,
+        T: Float + SampleUniform + Default + Serialize + Deserialize<'de>,
         StandardNormal: Distribution<T>
 {
     /// Build a new forest from the given training data
@@ -163,14 +161,16 @@ impl<T, const N: usize> Forest<T, N>
     }
 }
 
-//#[cfg_attr(feature="use-serde", derive(Serialize, Deserialize))]
-enum Node<T: Float + Default, const N: usize> {
+#[derive(Serialize, Deserialize)]
+enum Node<T, const N: usize>
+{
     Ex(ExNode),
     In(InNode<T, N>),
 }
 
-//#[cfg_attr(feature="use-serde", derive(Serialize, Deserialize))]
-struct InNode<T: Float + Default, const N: usize> {
+#[derive(Serialize, Deserialize)]
+struct InNode<T, const N: usize>
+{
     /// Left child node.
     left: Box<Node<T, N>>,
 
@@ -179,29 +179,29 @@ struct InNode<T: Float + Default, const N: usize> {
 
     /// Normal vector at the root of this tree, which is used in
     /// creating hyperplanes for splitting criteria
+    #[serde(with = "serde_array")]
     n: [T; N],
 
     /// Intercept point through which the hyperplane passes.
+    #[serde(with = "serde_array")]
     p: [T; N],
 }
 
-//#[cfg_attr(feature="use-serde", derive(Serialize, Deserialize))]
+#[derive(Serialize, Deserialize)]
 struct ExNode {
     /// Size of the dataset present at the node.
     num_samples: usize,
 }
 
-//#[cfg_attr(feature="use-serde", derive(Serialize, Deserialize))]
-struct Tree<T: Float + SampleUniform + Default, const N: usize>
-    where
-        StandardNormal: Distribution<T>
+#[derive(Serialize, Deserialize)]
+struct Tree<T, const N: usize>
 {
     root: Node<T, N>,
 }
 
-impl<T, const N: usize> Tree<T, N>
+impl<'de, T, const N: usize> Tree<T, N>
     where
-        T: Float + SampleUniform + Default,
+        T: Float + SampleUniform + Default + Serialize + Deserialize<'de>,
         StandardNormal: Distribution<T>
 {
     pub fn new(samples: &[&[T; N]], rng: &mut ThreadRng, max_tree_depth: usize, extension_level: usize) -> Self {
@@ -357,9 +357,7 @@ mod tests {
         Forest::from_slice(values.as_slice(), &options).unwrap()
     }
 
-    #[test]
-    fn score_forest_3d_f64() {
-        let forest = make_f64_forest();
+    fn assert_anomalies_forest_3d_f64(forest: &Forest<f64, 3>) {
         // no anomaly
         assert!(forest.score(&[1.0, 3.0, 25.0]) < 0.5);
         assert!(forest.score(&[1.0, 3.0, 35.0]) < 0.5);
@@ -369,16 +367,18 @@ mod tests {
         assert!(forest.score(&[-1.0, 2.0, 60.0]) > 0.5);
         assert!(forest.score(&[-1.0, 2.0, 0.0]) > 0.5);
     }
-    /*
 
-        #[cfg(feature = "use-serde")]
-        #[test]
-        fn serialize_forest_2d_f64() {
-            let forest = make_f64_forest();
+    #[test]
+    fn score_forest_3d_f64() {
+        let forest = make_f64_forest();
+        assert_anomalies_forest_3d_f64(&forest);
+    }
 
-            let forest_bytes = bincode::serialize(&forest).unwrap();
-            dbg!(&forest_bytes.len());
-        }
-
-     */
+    #[test]
+    fn serialize_forest_3d_f64() {
+        let forest = make_f64_forest();
+        let forest_json = serde_json::to_string(&forest).unwrap();
+        let forest2 = serde_json::from_str(forest_json.as_str()).unwrap();
+        assert_anomalies_forest_3d_f64(&forest2);
+    }
 }

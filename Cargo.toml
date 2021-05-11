@@ -1,18 +1,15 @@
 [package]
 name = "extended-isolation-forest"
 version = "0.1.0"
+description = "rust port of the anomaly detection algorithm"
 authors = ["Nico Mandery <nico@nmandery.net>"]
 edition = "2018"
 
-#[features]
-#use-serde = ["serde", "num/serde"]
-
 [dependencies]
-num = "0.3"
+num = "0.4"
 rand = { version = "0.8", features = ["alloc"] }
 rand_distr = "0.4"
-#serde = { version = "1", optional = true, features = ["derive"] }
+serde = { version = "1", features = ["derive"] }
 
-#[dev-dependencies]
-#bincode = "1.3"
-
+[dev-dependencies]
+serde_json = "1"
