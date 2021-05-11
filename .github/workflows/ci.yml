@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - master
+  release:
+    types: [created]
+  push:
+    branches:
+      - master
+  schedule:
+    - cron: "20 23 * * 4"
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+
+      - name: Install latest stable
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+          components: rustfmt, clippy
+
+      - name: Lint with rustfmt
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+
+      - name: Lint with clippy
+        uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+          args: --all-targets --all-features
+
+      - name: Test with cargo
+        uses: actions-rs/cargo@v1.0.1
+        with:
+          command: test
+          toolchain: stable
+          args: --all-features
+
+  rust-publish:
+    if: github.event_name == 'release' && github.event.action == 'created'
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Publish on crates.io
+        run: |
+          cargo login ${{ secrets.CARGO }}
+          cargo publish
