@@ -2,8 +2,8 @@ use std::{convert::TryInto, marker::PhantomData};
 
 use serde::{
     de::{SeqAccess, Visitor},
-    Deserialize,
-    Deserializer, ser::SerializeTuple, Serialize, Serializer,
+    ser::SerializeTuple,
+    Deserialize, Deserializer, Serialize, Serializer,
 };
 
 // from https://github.com/serde-rs/serde/issues/1937#issuecomment-812137971
@@ -22,8 +22,8 @@ pub fn serialize<S: Serializer, T: Serialize, const N: usize>(
 struct ArrayVisitor<T, const N: usize>(PhantomData<T>);
 
 impl<'de, T, const N: usize> Visitor<'de> for ArrayVisitor<T, N>
-    where
-        T: Deserialize<'de>,
+where
+    T: Deserialize<'de>,
 {
     type Value = [T; N];
 
@@ -33,8 +33,8 @@ impl<'de, T, const N: usize> Visitor<'de> for ArrayVisitor<T, N>
 
     #[inline]
     fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
-        where
-            A: SeqAccess<'de>,
+    where
+        A: SeqAccess<'de>,
     {
         // can be optimized using MaybeUninit
         let mut data = Vec::with_capacity(N);
@@ -52,9 +52,9 @@ impl<'de, T, const N: usize> Visitor<'de> for ArrayVisitor<T, N>
 }
 
 pub fn deserialize<'de, D, T, const N: usize>(deserializer: D) -> Result<[T; N], D::Error>
-    where
-        D: Deserializer<'de>,
-        T: Deserialize<'de>,
+where
+    D: Deserializer<'de>,
+    T: Deserialize<'de>,
 {
     deserializer.deserialize_tuple(N, ArrayVisitor::<T, N>(PhantomData))
 }

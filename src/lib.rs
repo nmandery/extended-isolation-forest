@@ -49,21 +49,12 @@
 use std::boxed::Box;
 use std::result::Result;
 
-use num::{
-    Float,
-    traits::FloatConst,
-};
+use num::{traits::FloatConst, Float};
 use rand::{
-    distributions::{
-        Uniform,
-        uniform::SampleUniform,
-    },
-    Rng,
+    distributions::{uniform::SampleUniform, Uniform},
     rngs::ThreadRng,
-    seq::{
-        IteratorRandom,
-        SliceRandom,
-    },
+    seq::{IteratorRandom, SliceRandom},
+    Rng,
 };
 use rand_distr::{Distribution, StandardNormal};
 #[cfg(feature = "serde")]
@@ -74,7 +65,6 @@ pub use crate::error::Error;
 mod error;
 #[cfg(feature = "serde")]
 mod serde_array;
-
 
 #[cfg(not(feature = "serde"))]
 pub trait ForestFloat<'de>: Float {}
@@ -113,9 +103,8 @@ impl Default for ForestOptions {
     }
 }
 
-#[cfg_attr(feature="serde", derive(Serialize, Deserialize))]
-pub struct Forest<T, const N: usize>
-{
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct Forest<T, const N: usize> {
     /// Multiplicative factor used in computing the anomaly scores.
     avg_path_length_c: f64,
 
@@ -123,9 +112,9 @@ pub struct Forest<T, const N: usize>
 }
 
 impl<'de, T, const N: usize> Forest<T, N>
-    where
-        T: ForestFloat<'de> + SampleUniform + Default,
-        StandardNormal: Distribution<T>
+where
+    T: ForestFloat<'de> + SampleUniform + Default,
+    StandardNormal: Distribution<T>,
 {
     /// Build a new forest from the given training data
     pub fn from_slice(training_data: &[[T; N]], options: &ForestOptions) -> Result<Self, Error> {
@@ -150,7 +139,12 @@ impl<'de, T, const N: usize> Forest<T, N>
                     .into_iter()
                     .collect();
 
-                Tree::new(tree_sample.as_slice(), rng, max_tree_depth, options.extension_level)
+                Tree::new(
+                    tree_sample.as_slice(),
+                    rng,
+                    max_tree_depth,
+                    options.extension_level,
+                )
             })
             .collect();
 
@@ -162,9 +156,7 @@ impl<'de, T, const N: usize> Forest<T, N>
 
     /// compute anomaly score for an item
     pub fn score(&self, values: &[T; N]) -> f64 {
-        let path_length: f64 = self.trees.iter()
-            .map(|tree| tree.path_length(values))
-            .sum();
+        let path_length: f64 = self.trees.iter().map(|tree| tree.path_length(values)).sum();
 
         // Average of path length travelled by the point in all trees.
         let eh = path_length / self.trees.len() as f64;
@@ -174,16 +166,14 @@ impl<'de, T, const N: usize> Forest<T, N>
     }
 }
 
-#[cfg_attr(feature="serde", derive(Serialize, Deserialize))]
-enum Node<T, const N: usize>
-{
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+enum Node<T, const N: usize> {
     Ex(ExNode),
     In(InNode<T, N>),
 }
 
-#[cfg_attr(feature="serde", derive(Serialize, Deserialize))]
-struct InNode<T, const N: usize>
-{
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+struct InNode<T, const N: usize> {
     /// Left child node.
     left: Box<Node<T, N>>,
 
@@ -192,45 +182,52 @@ struct InNode<T, const N: usize>
 
     /// Normal vector at the root of this tree, which is used in
     /// creating hyperplanes for splitting criteria
-    #[cfg_attr(feature="serde", serde(with = "serde_array"))]
+    #[cfg_attr(feature = "serde", serde(with = "serde_array"))]
     n: [T; N],
 
     /// Intercept point through which the hyperplane passes.
-    #[cfg_attr(feature="serde", serde(with = "serde_array"))]
+    #[cfg_attr(feature = "serde", serde(with = "serde_array"))]
     p: [T; N],
 }
 
-#[cfg_attr(feature="serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 struct ExNode {
     /// Size of the dataset present at the node.
     num_samples: usize,
 }
 
-#[cfg_attr(feature="serde", derive(Serialize, Deserialize))]
-struct Tree<T, const N: usize>
-{
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+struct Tree<T, const N: usize> {
     root: Node<T, N>,
 }
 
 impl<'de, T, const N: usize> Tree<T, N>
-    where
-        T: ForestFloat<'de> + SampleUniform + Default,
-        StandardNormal: Distribution<T>
+where
+    T: ForestFloat<'de> + SampleUniform + Default,
+    StandardNormal: Distribution<T>,
 {
-    pub fn new(samples: &[&[T; N]], rng: &mut ThreadRng, max_tree_depth: usize, extension_level: usize) -> Self {
+    pub fn new(
+        samples: &[&[T; N]],
+        rng: &mut ThreadRng,
+        max_tree_depth: usize,
+        extension_level: usize,
+    ) -> Self {
         Self {
-            root: Self::make_tree(samples, rng, 0, max_tree_depth, extension_level)
+            root: Self::make_tree(samples, rng, 0, max_tree_depth, extension_level),
         }
     }
 
-    fn make_tree(samples: &[&[T; N]], rng: &mut ThreadRng, current_tree_depth: usize, max_tree_depth: usize, extension_level: usize) -> Node<T, N> {
+    fn make_tree(
+        samples: &[&[T; N]],
+        rng: &mut ThreadRng,
+        current_tree_depth: usize,
+        max_tree_depth: usize,
+        extension_level: usize,
+    ) -> Node<T, N> {
         let num_samples = samples.len();
         if current_tree_depth >= max_tree_depth || num_samples <= 1 {
-            Node::Ex(ExNode {
-                num_samples,
-            })
+            Node::Ex(ExNode { num_samples })
         } else {
-
             // randomly select an intercept point p ~ ∈ IR |samples| in
             // the range of the samples
             let p = {
@@ -245,12 +242,9 @@ impl<'de, T, const N: usize> Tree<T, N>
 
                 // randomly pick an intercept point using a uniform distribution
                 let mut p = [T::zero(); N];
-                mins.iter()
-                    .zip(maxs.iter())
-                    .zip(p.iter_mut())
-                    .for_each(|((min_val, max_val), p_i)|
-                        *p_i = rng.sample(Uniform::new(*min_val, *max_val))
-                    );
+                mins.iter().zip(maxs.iter()).zip(p.iter_mut()).for_each(
+                    |((min_val, max_val), p_i)| *p_i = rng.sample(Uniform::new(*min_val, *max_val)),
+                );
                 p
             };
 
@@ -277,12 +271,20 @@ impl<'de, T, const N: usize> Tree<T, N>
             }
 
             Node::In(InNode {
-                left: Box::new(
-                    Self::make_tree(samples_left.as_slice(), rng, current_tree_depth + 1, max_tree_depth, extension_level)
-                ),
-                right: Box::new(
-                    Self::make_tree(samples_right.as_slice(), rng, current_tree_depth + 1, max_tree_depth, extension_level)
-                ),
+                left: Box::new(Self::make_tree(
+                    samples_left.as_slice(),
+                    rng,
+                    current_tree_depth + 1,
+                    max_tree_depth,
+                    extension_level,
+                )),
+                right: Box::new(Self::make_tree(
+                    samples_right.as_slice(),
+                    rng,
+                    current_tree_depth + 1,
+                    max_tree_depth,
+                    extension_level,
+                )),
                 n,
                 p,
             })
@@ -321,8 +323,7 @@ impl<'de, T, const N: usize> Tree<T, N>
 ///
 /// Returns the average path length of unsuccessful search in a BST
 fn c_factor(n: usize) -> f64 {
-    2.0 * ((n as f64 - 1.0).log(f64::E()) + 0.5772156649)
-        - (2.0 * (n as f64 - 1.0) / n as f64)
+    2.0 * ((n as f64 - 1.0).log(f64::E()) + 0.5772156649) - (2.0 * (n as f64 - 1.0) / n as f64)
 }
 
 enum Direction {
@@ -331,9 +332,12 @@ enum Direction {
 }
 
 fn determinate_direction<T, const N: usize>(sample: &[T; N], n: &[T; N], p: &[T; N]) -> Direction
-    where T: Float
+where
+    T: Float,
 {
-    let direction_value = sample.iter().zip(p.iter())
+    let direction_value = sample
+        .iter()
+        .zip(p.iter())
         .map(|(sample_val, p_val)| *sample_val - *p_val)
         .zip(n.iter())
         .fold(T::zero(), |sum, (sp_val, n_val)| sum + sp_val * (*n_val));
@@ -358,7 +362,13 @@ mod tests {
         let distribution2 = Uniform::new(10., 50.);
 
         let values: Vec<_> = (0..6000)
-            .map(|_| [rng.sample(distribution), rng.sample(distribution), rng.sample(distribution2)])
+            .map(|_| {
+                [
+                    rng.sample(distribution),
+                    rng.sample(distribution),
+                    rng.sample(distribution2),
+                ]
+            })
             .collect();
 
         let options = ForestOptions {
