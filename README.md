@@ -39,7 +39,7 @@ fn main() {
 
     // no anomaly
     assert!(forest.score(&[1.0, 3.0, 25.0]) < 0.5);
-    assert!(forest.score(&[1.0, 3.0, 35.0]) < 0.5);
+    assert!(forest.score(&[-1.0, 3.0, 25.0]) < 0.5);
 
     // anomalies
     assert!(forest.score(&[-12.0, 6.0, 25.0]) > 0.5);
