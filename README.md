@@ -1,5 +1,7 @@
 # Extended Isolation Forest
 
+[![Latest Version](https://img.shields.io/crates/v/extended-isolation-forest.svg)](https://crates.io/crates/extended-isolation-forest)
+
 This is a rust port of the anomaly detection algorithm described in [Extended Isolation Forest](https://doi.org/10.1109/TKDE.2019.2947676)
 and implemented in [https://github.com/sahandha/eif](https://github.com/sahandha/eif). For a detailed description see the paper or the
 github repository.
