@@ -47,3 +47,20 @@ fn main() {
     assert!(forest.score(&[-1.0, 2.0, 0.0]) > 0.5);
 }
 ```
+
+## Example: Detection anomalies in movement recordings
+
+This example uses acceleration data recorded using a smartphone while walking up and down stairs. The anomaly was 
+caused by a small jump. The code is in `[examples/walking_stairs.rs](examples/walking_stairs.rs)`, the data itself
+is in `[data/acceleration](data/acceleration)`. All data for this example was collected with the [phyphox smartphone app](https://phyphox.org/). 
+
+The example can be executed using
+
+```
+cargo run --example walking_stairs
+```
+
+Expected result:
+
+![](walking_stairs.png)
+
