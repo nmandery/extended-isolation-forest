@@ -243,7 +243,14 @@ where
                 // randomly pick an intercept point using a uniform distribution
                 let mut p = [T::zero(); N];
                 mins.iter().zip(maxs.iter()).zip(p.iter_mut()).for_each(
-                    |((min_val, max_val), p_i)| *p_i = rng.sample(Uniform::new(*min_val, *max_val)),
+                    |((min_val, max_val), p_i)| {
+                        *p_i = if min_val == max_val {
+                            // sampling with lower and upper bound being equal panics
+                            *min_val
+                        } else {
+                            rng.sample(Uniform::new(*min_val, *max_val))
+                        }
+                    },
                 );
                 p
             };
