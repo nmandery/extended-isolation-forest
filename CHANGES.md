@@ -8,8 +8,11 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## extended-isolation-forest Unreleased
 
-### Added
+## extended-isolation-forest 0.2.1 - 2022-08-02
 
+### Changed
+* Preventing panic during sampling random values when upper and lower bound are equal.
+### Added
 * Acceleration example
 
 ## extended-isolation-forest 0.2.0 - 2021-05-12
