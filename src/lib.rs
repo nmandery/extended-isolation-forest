@@ -214,88 +214,7 @@ where
         extension_level: usize,
     ) -> Self {
         Self {
-            root: Self::make_tree(samples, rng, 0, max_tree_depth, extension_level),
-        }
-    }
-
-    fn make_tree(
-        samples: &[&[T; N]],
-        rng: &mut ThreadRng,
-        current_tree_depth: usize,
-        max_tree_depth: usize,
-        extension_level: usize,
-    ) -> Node<T, N> {
-        let num_samples = samples.len();
-        if current_tree_depth >= max_tree_depth || num_samples <= 1 {
-            Node::Ex(ExNode { num_samples })
-        } else {
-            // randomly select an intercept point p ~ ∈ IR |samples| in
-            // the range of the samples
-            let p = {
-                let mut maxs = *samples[0];
-                let mut mins = *samples[0];
-                samples.iter().skip(1).for_each(|s| {
-                    s.iter().enumerate().for_each(|(i, v)| {
-                        maxs[i] = if *v > maxs[i] { *v } else { maxs[i] };
-                        mins[i] = if *v < mins[i] { *v } else { mins[i] };
-                    })
-                });
-
-                // randomly pick an intercept point using a uniform distribution
-                let mut p = [T::zero(); N];
-                mins.iter().zip(maxs.iter()).zip(p.iter_mut()).for_each(
-                    |((min_val, max_val), p_i)| {
-                        *p_i = if min_val == max_val {
-                            // sampling with lower and upper bound being equal panics
-                            *min_val
-                        } else {
-                            rng.sample(Uniform::new(*min_val, *max_val))
-                        }
-                    },
-                );
-                p
-            };
-
-            // randomly select a normal vector ~n ∈ IR |samples| by drawing each coordinate
-            // of ~n from a standard Gaussian distribution.
-            let mut n = [T::zero(); N];
-            (0..N)
-                .zip(n.iter_mut())
-                .for_each(|(_, n_i)| *n_i = rng.sample(StandardNormal));
-
-            // set coordinates of ~n to zero according to extension level
-            for idx in (0..N).choose_multiple(rng, N - extension_level - 1) {
-                n[idx] = T::zero();
-            }
-
-            let mut samples_left = vec![];
-            let mut samples_right = vec![];
-
-            for sample in samples {
-                match determinate_direction(*sample, &n, &p) {
-                    Direction::Left => samples_left.push(*sample),
-                    Direction::Right => samples_right.push(*sample),
-                }
-            }
-
-            Node::In(InNode {
-                left: Box::new(Self::make_tree(
-                    samples_left.as_slice(),
-                    rng,
-                    current_tree_depth + 1,
-                    max_tree_depth,
-                    extension_level,
-                )),
-                right: Box::new(Self::make_tree(
-                    samples_right.as_slice(),
-                    rng,
-                    current_tree_depth + 1,
-                    max_tree_depth,
-                    extension_level,
-                )),
-                n,
-                p,
-            })
+            root: make_node(samples, rng, 0, max_tree_depth, extension_level),
         }
     }
 
@@ -323,6 +242,92 @@ where
                 )
             }
         }
+    }
+}
+
+fn make_node<'de, T, const N: usize>(
+    samples: &[&[T; N]],
+    rng: &mut ThreadRng,
+    current_tree_depth: usize,
+    max_tree_depth: usize,
+    extension_level: usize,
+) -> Node<T, N>
+where
+    T: ForestFloat<'de> + SampleUniform + Default,
+    StandardNormal: Distribution<T>,
+{
+    let num_samples = samples.len();
+    if current_tree_depth >= max_tree_depth || num_samples <= 1 {
+        Node::Ex(ExNode { num_samples })
+    } else {
+        // randomly select an intercept point p ~ ∈ IR |samples| in
+        // the range of the samples
+        let p = {
+            let mut maxs = *samples[0];
+            let mut mins = *samples[0];
+            samples.iter().skip(1).for_each(|s| {
+                s.iter().enumerate().for_each(|(i, v)| {
+                    maxs[i] = if *v > maxs[i] { *v } else { maxs[i] };
+                    mins[i] = if *v < mins[i] { *v } else { mins[i] };
+                })
+            });
+
+            // randomly pick an intercept point using a uniform distribution
+            let mut p = [T::zero(); N];
+            mins.iter()
+                .zip(maxs.iter())
+                .zip(p.iter_mut())
+                .for_each(|((min_val, max_val), p_i)| {
+                    *p_i = if min_val == max_val {
+                        // sampling with lower and upper bound being equal panics
+                        *min_val
+                    } else {
+                        rng.sample(Uniform::new(*min_val, *max_val))
+                    }
+                });
+            p
+        };
+
+        // randomly select a normal vector ~n ∈ IR |samples| by drawing each coordinate
+        // of ~n from a standard Gaussian distribution.
+        let mut n = [T::zero(); N];
+        (0..N)
+            .zip(n.iter_mut())
+            .for_each(|(_, n_i)| *n_i = rng.sample(StandardNormal));
+
+        // set coordinates of ~n to zero according to extension level
+        for idx in (0..N).choose_multiple(rng, N - extension_level - 1) {
+            n[idx] = T::zero();
+        }
+
+        let mut samples_left = vec![];
+        let mut samples_right = vec![];
+
+        for sample in samples {
+            match determinate_direction(*sample, &n, &p) {
+                Direction::Left => samples_left.push(*sample),
+                Direction::Right => samples_right.push(*sample),
+            }
+        }
+
+        Node::In(InNode {
+            left: Box::new(make_node(
+                samples_left.as_slice(),
+                rng,
+                current_tree_depth + 1,
+                max_tree_depth,
+                extension_level,
+            )),
+            right: Box::new(make_node(
+                samples_right.as_slice(),
+                rng,
+                current_tree_depth + 1,
+                max_tree_depth,
+                extension_level,
+            )),
+            n,
+            p,
+        })
     }
 }
 
