@@ -108,7 +108,7 @@ pub struct Forest<T, const N: usize> {
     /// Multiplicative factor used in computing the anomaly scores.
     avg_path_length_c: f64,
 
-    trees: Vec<Tree<T, N>>,
+    trees: Box<[Tree<T, N>]>,
 }
 
 impl<'de, T, const N: usize> Forest<T, N>
@@ -146,7 +146,8 @@ where
                     options.extension_level,
                 )
             })
-            .collect();
+            .collect::<Vec<_>>()
+            .into_boxed_slice();
 
         Ok(Self {
             avg_path_length_c: c_factor(options.sample_size),
