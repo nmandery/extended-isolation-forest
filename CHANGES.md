@@ -8,6 +8,11 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## extended-isolation-forest Unreleased
 
+### Changed
+
+* use boxed slice for the trees instead of vec as no growing is necessary
+* Reduce image size of example plot
+
 ## extended-isolation-forest 0.2.1 - 2022-08-02
 
 ### Changed
