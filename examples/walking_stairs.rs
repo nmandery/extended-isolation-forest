@@ -78,8 +78,7 @@ fn main() -> Result<()> {
 
     upper_chart
         .configure_mesh()
-        //.disable_x_mesh()
-        //.disable_y_mesh()
+        .disable_mesh()
         .y_desc("Linear Acceleration (m/s²)")
         .x_desc("Time step")
         .draw()?;
@@ -116,8 +115,7 @@ fn main() -> Result<()> {
 
     lower_chart
         .configure_mesh()
-        //.disable_x_mesh()
-        //.disable_y_mesh()
+        .disable_mesh()
         .y_desc("Anomaly score")
         .x_desc("Time step")
         .draw()?;
