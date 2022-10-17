@@ -12,6 +12,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 * use boxed slice for the trees instead of vec as no growing is necessary
 * Reduce image size of example plot
+* Derive `Clone`, `Eq` and `PartialEq` on `ForestOptions`.
 
 ## extended-isolation-forest 0.2.1 - 2022-08-02
 

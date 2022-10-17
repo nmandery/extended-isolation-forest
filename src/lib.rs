@@ -75,6 +75,7 @@ pub trait ForestFloat<'de>: Float + Serialize + Deserialize<'de> {}
 impl<'de> ForestFloat<'de> for f32 {}
 impl<'de> ForestFloat<'de> for f64 {}
 
+#[derive(Clone, Eq, PartialEq)]
 pub struct ForestOptions {
     /// `n_trees` is the number of trees to be created.
     pub n_trees: usize,
