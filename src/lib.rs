@@ -221,27 +221,30 @@ where
 
     /// length of the path traversed by the point on the tree when it reaches an external node.
     pub fn path_length(&self, values: &[T; N]) -> f64 {
-        self.path_length_recurse(&self.root, values)
+        path_length_recurse(&self.root, values)
     }
+}
 
-    fn path_length_recurse(&self, node: &Node<T, N>, values: &[T; N]) -> f64 {
-        match node {
-            Node::Ex(ex_node) => {
-                if ex_node.num_samples <= 1 {
-                    0.0
-                } else {
-                    c_factor(ex_node.num_samples)
-                }
+fn path_length_recurse<T, const N: usize>(node: &Node<T, N>, values: &[T; N]) -> f64
+where
+    T: Float,
+{
+    match node {
+        Node::Ex(ex_node) => {
+            if ex_node.num_samples <= 1 {
+                0.0
+            } else {
+                c_factor(ex_node.num_samples)
             }
-            Node::In(in_node) => {
-                1.0 + self.path_length_recurse(
-                    match determinate_direction(values, &in_node.n, &in_node.p) {
-                        Direction::Left => in_node.left.as_ref(),
-                        Direction::Right => in_node.right.as_ref(),
-                    },
-                    values,
-                )
-            }
+        }
+        Node::In(in_node) => {
+            1.0 + path_length_recurse(
+                match determinate_direction(values, &in_node.n, &in_node.p) {
+                    Direction::Left => in_node.left.as_ref(),
+                    Direction::Right => in_node.right.as_ref(),
+                },
+                values,
+            )
         }
     }
 }
@@ -305,7 +308,7 @@ where
         let mut samples_right = vec![];
 
         for sample in samples {
-            match determinate_direction(*sample, &n, &p) {
+            match determinate_direction(sample, &n, &p) {
                 Direction::Left => samples_left.push(*sample),
                 Direction::Right => samples_right.push(*sample),
             }

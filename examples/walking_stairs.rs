@@ -1,7 +1,6 @@
 use std::path::PathBuf;
 
 use eyre::Result;
-use plotters;
 use plotters::prelude::*;
 
 use extended_isolation_forest::{Forest, ForestOptions};
@@ -95,7 +94,7 @@ fn main() -> Result<()> {
                 rows.iter()
                     .enumerate()
                     .map(|(idx, values)| (idx as f64, values[array_idx])),
-                style.clone(),
+                style,
             ))?
             .label(label)
             .legend(move |(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], style));
@@ -103,7 +102,7 @@ fn main() -> Result<()> {
 
     upper_chart
         .configure_series_labels()
-        .background_style(&RGBColor(200, 200, 200))
+        .background_style(RGBColor(200, 200, 200))
         .draw()?;
 
     let mut lower_chart = ChartBuilder::on(&lower)
@@ -127,9 +126,9 @@ fn main() -> Result<()> {
                 .enumerate()
                 .map(|(idx, row)| (idx as f64, forest.score(row))),
             0.0,
-            &RED.mix(0.2),
+            RED.mix(0.2),
         )
-        .border_style(&RED),
+        .border_style(RED),
     )?;
 
     root.present()?;
