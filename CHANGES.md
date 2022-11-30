@@ -7,22 +7,20 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
 ## extended-isolation-forest Unreleased
+### Changed
+* Depend only on `num-traits` instead of `num`
 
 ## extended-isolation-forest 0.2.2 - 2022-10-17
-
 ### Changed
-
 * use boxed slice for the trees instead of vec as no growing is necessary
 * Reduce image size of example plot
 * Derive `Clone`, `Eq` and `PartialEq` on `ForestOptions`.
 
 ## extended-isolation-forest 0.2.1 - 2022-08-02
-
 ### Changed
 * Preventing panic during sampling random values when upper and lower bound are equal.
 ### Added
 * Acceleration example
 
 ## extended-isolation-forest 0.2.0 - 2021-05-12
-
 First version released on crates.io

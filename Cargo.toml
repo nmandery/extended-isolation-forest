@@ -14,7 +14,7 @@ keywords = [
 ]
 
 [dependencies]
-num = "0.4"
+num-traits = "0.2"
 rand = { version = "0.8", features = ["alloc"] }
 rand_distr = "0.4"
 serde = { version = "1", optional = true, features = ["derive"] }

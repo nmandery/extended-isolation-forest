@@ -49,7 +49,7 @@
 use std::boxed::Box;
 use std::result::Result;
 
-use num::{traits::FloatConst, Float};
+use num_traits::{Float, FloatConst};
 use rand::{
     distributions::{uniform::SampleUniform, Uniform},
     rngs::ThreadRng,
