@@ -7,6 +7,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
 ## extended-isolation-forest Unreleased
+
+## extended-isolation-forest 0.2.3 - 2022-11-30
 ### Changed
 * Depend only on `num-traits` instead of `num`
 
