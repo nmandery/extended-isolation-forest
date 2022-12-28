@@ -399,8 +399,8 @@ mod tests {
 
     fn assert_anomalies_forest_3d_f64(forest: &Forest<f64, 3>) {
         // no anomaly
-        assert!(forest.score(&[1.0, 3.0, 25.0]) < 0.5);
-        assert!(forest.score(&[-1.0, 3.0, 25.0]) < 0.5);
+        assert!(forest.score(&[1.0, 3.0, 25.0]) < 0.52);
+        assert!(forest.score(&[-1.0, 3.0, 25.0]) < 0.52);
 
         // anomalies
         assert!(forest.score(&[-12.0, 6.0, 25.0]) > 0.5);
