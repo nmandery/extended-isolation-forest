@@ -137,7 +137,6 @@ where
             .map(|_| {
                 let tree_sample: Vec<_> = training_data
                     .choose_multiple(rng, options.sample_size)
-                    .into_iter()
                     .collect();
 
                 Tree::new(
